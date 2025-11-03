@@ -16,9 +16,15 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh '''
+                # Create a fresh Python virtual environment
                 python3 -m venv venv
                 . venv/bin/activate
-                python -m pip install --upgrade pip --break-system-packages
+
+                # Pin pip to a stable version (avoid pip 25.x issues)
+                python -m ensurepip
+                python -m pip install --upgrade "pip==24.3.1" --break-system-packages
+
+                # Install required Python dependencies
                 python -m pip install --break-system-packages -r requirements.txt
                 '''
             }
