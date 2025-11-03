@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')
-        IMAGE_NAME = 'venkatadurgaraoponnaganti/python-demo-app'
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')  // Jenkins credential ID
+        DOCKER_IMAGE = "venkatadurgarao/jenkins-python-demo"
     }
 
     stages {
@@ -14,28 +14,28 @@ pipeline {
         }
 
         stage('Install Dependencies') {
-        steps {
-        sh '''
-        # Create a fresh virtual environment
-        python3 -m venv venv
-        . venv/bin/activate
+            steps {
+                sh '''
+                echo "Creating virtual environment..."
+                python3 -m venv venv
+                . venv/bin/activate
 
-        # Reinstall a stable pip manually to avoid ImportError
-        curl -sS https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-        python get-pip.py pip==24.1.2
+                echo "Fixing pip version for Ubuntu 24.04..."
+                rm -rf venv/lib/python3.12/site-packages/pip*
+                curl -sS https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+                python get-pip.py pip==23.3.2
+                pip --version
 
-        # Confirm working pip version
-        pip --version
-
-        # Install dependencies safely
-        pip install -r requirements.txt
-        '''
-        }
+                echo "Installing project dependencies..."
+                pip install -r requirements.txt
+                '''
+            }
         }
 
         stage('Test') {
             steps {
                 sh '''
+                echo "Running unit tests..."
                 . venv/bin/activate
                 pytest -v test_app.py
                 '''
@@ -45,18 +45,21 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
-                docker build -t $IMAGE_NAME:latest .
+                echo "Building Docker image..."
+                docker build -t $DOCKER_IMAGE:latest .
                 '''
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                withDockerRegistry([ credentialsId: 'dockerhub-creds', url: '' ]) {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
                     sh '''
-                    docker tag $IMAGE_NAME:latest $IMAGE_NAME:${BUILD_NUMBER}
-                    docker push $IMAGE_NAME:latest
-                    docker push $IMAGE_NAME:${BUILD_NUMBER}
+                    echo "Logging into Docker Hub..."
+                    echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+                    echo "Pushing image to Docker Hub..."
+                    docker push $DOCKER_IMAGE:latest
+                    docker logout
                     '''
                 }
             }
@@ -64,8 +67,14 @@ pipeline {
 
         stage('Build Complete') {
             steps {
-                echo '✅ CI/CD Pipeline Completed Successfully!'
+                echo '✅ Build, Test, and Docker Push Completed Successfully!'
             }
+        }
+    }
+
+    post {
+        failure {
+            echo '❌ Pipeline failed! Check the logs for errors.'
         }
     }
 }
