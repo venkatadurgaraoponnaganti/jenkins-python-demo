@@ -5,16 +5,19 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/venkatadurgaraoponnaganti/jenkins-python-demo.git'
-
             }
         }
 
         stage('Install Dependencies') {
             steps {
                 sh '''
+                # Create and activate virtual environment
                 python3 -m venv venv
                 . venv/bin/activate
-                pip install -r requirements.txt
+
+                # Upgrade pip and install dependencies safely (Ubuntu 24.04 fix)
+                pip install --upgrade pip
+                pip install --break-system-packages -r requirements.txt
                 '''
             }
         }
@@ -30,7 +33,7 @@ pipeline {
 
         stage('Build Complete') {
             steps {
-                echo 'Build and Test Completed Successfully!'
+                echo '✅ Build and Test Completed Successfully!'
             }
         }
     }
