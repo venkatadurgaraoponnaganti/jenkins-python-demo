@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')  // Jenkins credential ID
-        DOCKER_IMAGE = "venkatadurgarao/jenkins-python-demo"
+        DOCKERHUB_CREDENTIALS = credentials('pvdr8978')  // Jenkins credential ID
+        DOCKER_IMAGE = "pvdr8978/jenkins-python-demo"
     }
 
     stages {
