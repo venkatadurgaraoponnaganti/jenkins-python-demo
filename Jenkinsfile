@@ -14,20 +14,23 @@ pipeline {
         }
 
         stage('Install Dependencies') {
-            steps {
-                sh '''
-                # Create a fresh Python virtual environment
-                python3 -m venv venv
-                . venv/bin/activate
+        steps {
+        sh '''
+        # Create a fresh virtual environment
+        python3 -m venv venv
+        . venv/bin/activate
 
-                # Pin pip to a stable version (avoid pip 25.x issues)
-                python -m ensurepip
-                python -m pip install --upgrade "pip==24.3.1" --break-system-packages
+        # Reinstall a stable pip manually to avoid ImportError
+        curl -sS https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+        python get-pip.py pip==24.1.2
 
-                # Install required Python dependencies
-                python -m pip install --break-system-packages -r requirements.txt
-                '''
-            }
+        # Confirm working pip version
+        pip --version
+
+        # Install dependencies safely
+        pip install -r requirements.txt
+        '''
+        }
         }
 
         stage('Test') {
