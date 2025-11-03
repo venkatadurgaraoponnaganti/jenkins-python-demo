@@ -4,20 +4,21 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/venkatadurgaraoponnaganti/jenkins-python-demo.git'
+                git branch: 'main',
+                    url: 'https://github.com/venkatadurgaraoponnaganti/jenkins-python-demo.git'
             }
         }
 
         stage('Install Dependencies') {
             steps {
                 sh '''
-                # Create and activate virtual environment
+                # Create & activate isolated virtual environment
                 python3 -m venv venv
                 . venv/bin/activate
 
-                # Upgrade pip and install dependencies safely (Ubuntu 24.04 fix)
-                pip install --upgrade pip
-                pip install --break-system-packages -r requirements.txt
+                # Upgrade pip and install requirements
+                python -m pip install --upgrade pip --break-system-packages
+                python -m pip install --break-system-packages -r requirements.txt
                 '''
             }
         }
@@ -26,7 +27,7 @@ pipeline {
             steps {
                 sh '''
                 . venv/bin/activate
-                pytest test_app.py
+                pytest -v test_app.py
                 '''
             }
         }
