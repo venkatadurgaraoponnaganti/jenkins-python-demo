@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')  // Jenkins credential ID
         DOCKER_IMAGE = "pvdr8978/jenkins-python-demo"
     }
 
@@ -17,17 +16,17 @@ pipeline {
             steps {
                 sh '''
                 echo "Creating virtual environment..."
-                python3 -m venv venv
+                python3 -m venv venv || (echo "python3-venv not found, installing..." && sudo apt update && sudo apt install -y python3.12-venv && python3 -m venv venv)
                 . venv/bin/activate
 
                 echo "Fixing pip version for Ubuntu 24.04..."
                 rm -rf venv/lib/python3.12/site-packages/pip*
                 curl -sS https://bootstrap.pypa.io/get-pip.py -o get-pip.py
                 python get-pip.py pip==23.3.2
-                pip --version
-
-                echo "Installing project dependencies..."
                 pip install -r requirements.txt
+
+                echo "Fixing permissions for Jenkins..."
+                chmod +x venv/bin/*
                 '''
             }
         }
@@ -36,8 +35,9 @@ pipeline {
             steps {
                 sh '''
                 echo "Running unit tests..."
+                chmod +x venv/bin/pytest
                 . venv/bin/activate
-                pytest -v test_app.py
+                venv/bin/pytest -v test_app.py
                 '''
             }
         }
