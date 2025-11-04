@@ -16,6 +16,7 @@ pipeline {
             steps {
 		sh '''
                 echo "Creating virtual environment..."
+		chmod -R 755 venv/bin
                 python3 -m venv venv || (echo "python3-venv not found, installing..." && sudo apt update && sudo apt install -y python3.12-venv && python3 -m venv venv)
                 . venv/bin/activate
 
