@@ -63,7 +63,23 @@ pipeline {
                 }
             }
         }
+   
+
+
+
+	stage('Deploy to EC2') {
+    		steps {
+        	sshagent(credentials: ['keypair']) {
+            	sh '''
+            	ssh -o StrictHostKeyChecking=no ubuntu@<13.201.193.47> '
+                docker pull pvdr8978/jenkins-python-demo:latest &&
+                docker run -d -p 5000:5000 pvdr8978/jenkins-python-demo:latest
+            '
+            '''
+        }
     }
+}
+ }
 
     post {
         success {
