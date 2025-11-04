@@ -24,10 +24,11 @@ pipeline {
                 curl -sS https://bootstrap.pypa.io/get-pip.py -o get-pip.py
                 python get-pip.py pip==23.3.2
                 pip install -r requirements.txt
-
+		sh '''
                 echo "Fixing permissions for Jenkins (safe mode)..."
 		# Only fix script permissions, skip system binaries
-		find venv/bin -type f ! -name "python*" -exec chmod +x {} \;
+		find venv/bin -type f ! -name "python*" -exec chmod +x {} \\;
+		'''
 		 '''
             }
         }
