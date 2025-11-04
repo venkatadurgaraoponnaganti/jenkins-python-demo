@@ -26,7 +26,9 @@ pipeline {
                 pip install -r requirements.txt
 
                 echo "Fixing permissions for Jenkins..."
-                chmod +x venv/bin/*
+                 chmod -R 755 venv/bin
+
+                 chmod +x venv/bin/*
                 '''
             }
         }
