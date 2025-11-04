@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "pvdr8978/jenkins-python-demo"
+        PROJECT = "jenkins-python-demo"
     }
 
     stages {
@@ -14,33 +14,32 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-		sh '''
-                echo "Creating virtual environment..."
-		chmod -R 755 venv/bin
-                python3 -m venv venv || (echo "python3-venv not found, installing..." && sudo apt update && sudo apt install -y python3.12-venv && python3 -m venv venv)
-                . venv/bin/activate
+                sh '''
+                    echo "Creating virtual environment..."
+                    python3 -m venv venv
 
-                echo "Fixing pip version for Ubuntu 24.04..."
-                rm -rf venv/lib/python3.12/site-packages/pip*
-                curl -sS https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-                python get-pip.py pip==23.3.2
-                pip install -r requirements.txt
-		
-                echo "Fixing permissions for Jenkins (safe mode)..."
-		
-		find venv/bin -type f ! -name "python*" -exec chmod +x {} \\;
-	
-		 '''
+                    echo "Activating virtual environment..."
+                    . venv/bin/activate
+
+                    echo "Fixing pip..."
+                    curl -sS https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+                    python get-pip.py pip==23.3.2
+
+                    echo "Installing dependencies..."
+                    pip install -r requirements.txt
+
+                    echo "Fixing permissions..."
+                    chmod -R 755 venv
+                '''
             }
         }
 
         stage('Test') {
             steps {
                 sh '''
-                echo "Running unit tests..."
-                chmod +x venv/bin/pytest
-                . venv/bin/activate
-                venv/bin/pytest -v test_app.py
+                    echo "Running unit tests..."
+                    chmod +x venv/bin/pytest
+                    venv/bin/python3 -m pytest -v test_app.py
                 '''
             }
         }
@@ -48,36 +47,30 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
-                echo "Building Docker image..."
-                docker build -t $DOCKER_IMAGE:latest .
+                    echo "Building Docker image..."
+                    docker build -t pvdr8978/jenkins-python-demo:latest .
                 '''
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
                     sh '''
-                    echo "Logging into Docker Hub..."
-                    echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
-                    echo "Pushing image to Docker Hub..."
-                    docker push $DOCKER_IMAGE:latest
-                    docker logout
+                        echo "$PASSWORD" | docker login -u "$USERNAME" --password-stdin
+                        docker push pvdr8978/jenkins-python-demo:latest
                     '''
                 }
-            }
-        }
-
-        stage('Build Complete') {
-            steps {
-                echo '✅ Build, Test, and Docker Push Completed Successfully!'
             }
         }
     }
 
     post {
+        success {
+            echo "✅ Build and tests successful!"
+        }
         failure {
-            echo '❌ Pipeline failed! Check the logs for errors.'
+            echo "❌ Pipeline failed! Check the logs for errors."
         }
     }
 }
