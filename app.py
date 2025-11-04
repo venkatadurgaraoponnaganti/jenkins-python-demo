@@ -4,7 +4,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "Jenkins Python Demo running successfully!"
+    return "->Jenkins Python Demo running successfully!"
 
 def add(a, b):
     return a + b
