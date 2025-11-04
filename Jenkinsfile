@@ -14,7 +14,7 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh '''
+		sh '''
                 echo "Creating virtual environment..."
                 python3 -m venv venv || (echo "python3-venv not found, installing..." && sudo apt update && sudo apt install -y python3.12-venv && python3 -m venv venv)
                 . venv/bin/activate
@@ -24,11 +24,11 @@ pipeline {
                 curl -sS https://bootstrap.pypa.io/get-pip.py -o get-pip.py
                 python get-pip.py pip==23.3.2
                 pip install -r requirements.txt
-		sh '''
+		
                 echo "Fixing permissions for Jenkins (safe mode)..."
-		# Only fix script permissions, skip system binaries
+		
 		find venv/bin -type f ! -name "python*" -exec chmod +x {} \\;
-		'''
+	
 		 '''
             }
         }
