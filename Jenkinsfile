@@ -25,11 +25,10 @@ pipeline {
                 python get-pip.py pip==23.3.2
                 pip install -r requirements.txt
 
-                echo "Fixing permissions for Jenkins..."
-                 chmod -R 755 venv/bin
-
-                 chmod +x venv/bin/*
-                '''
+                echo "Fixing permissions for Jenkins (safe mode)..."
+		# Only fix script permissions, skip system binaries
+		find venv/bin -type f ! -name "python*" -exec chmod +x {} \;
+		 '''
             }
         }
 
